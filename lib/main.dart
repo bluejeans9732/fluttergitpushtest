@@ -8,6 +8,16 @@ import 'dart:convert';
 //스크롤 관련 package
 import 'package:flutter/rendering.dart';
 
+//이미지 픽커
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+
+// db없이 저장
+import 'package:shared_preferences/shared_preferences.dart';
+
+//슬라이드 표현
+import 'package:flutter/cupertino.dart';
+
 void main() {
   runApp(
     MaterialApp(
@@ -28,6 +38,34 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   var tab = 0;
   var data = [];
+  var userImage;
+  var userContent;
+
+  saveData() async {
+    var storage = await SharedPreferences.getInstance();
+    storage.setString('name', 'john');
+  }
+
+  addMyData() {
+    var myData = {
+      'id': data.length,
+      'image': userImage,
+      'likes': 5,
+      'date': 'July 25',
+      'content': userContent,
+      'liked': false,
+      'user': 'John Kim'
+    };
+    setState(() {
+      data.insert(0, myData);
+    });
+  }
+
+  setUserContent(a) {
+    setState(() {
+      userContent = a;
+    });
+  }
 
   addData(a){
     setState(() {
@@ -57,7 +95,21 @@ class _MyAppState extends State<MyApp> {
         actions: [
           IconButton(
             icon: Icon(Icons.add_box_outlined),
-            onPressed: (){},
+            onPressed: () async {
+              var picker = ImagePicker();
+              var image = await picker.pickImage(source: ImageSource.gallery);
+              if(image != null) {
+                setState(() {
+                  userImage = File(image.path);
+                });
+              }
+
+              Navigator.push(context,
+                MaterialPageRoute(builder: (c) => Upload(
+                    userImage : userImage, setUserContent : setUserContent, addMyData : addMyData
+                ) )
+              );
+            },
             iconSize: 30,
           )
         ],
@@ -118,9 +170,23 @@ class _HomeState extends State<Home> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(widget.data[i]['image']),
+            widget.data[i]['image'].runtimeType == String
+                ? Image.network(widget.data[i]['image'])
+                : Image.file(widget.data[i]['image']),
+            GestureDetector(
+              child: Text(widget.data[i]['user']),
+              onTap: (){
+                Navigator.push(context, 
+                  PageRouteBuilder(
+                      pageBuilder: (c, a1, a2) => Profile(),
+                      transitionsBuilder: (c, a1, a2, child) =>
+                        FadeTransition(opacity: a1, child: child)
+                  )
+                );
+              },
+            ),
             Text('좋아요 ${widget.data[i]['likes'].toString()}'),
-            Text(widget.data[i]['user']),
+            Text(widget.data[i]['date']),
             Text(widget.data[i]['content']),
           ],
         );
@@ -128,5 +194,51 @@ class _HomeState extends State<Home> {
     } else {
       return Text('로딩중');
     }
+  }
+}
+
+class Upload extends StatelessWidget {
+  const Upload({Key? key, this.userImage, this.setUserContent, this.addMyData}) : super(key: key);
+  final userImage;
+  final setUserContent;
+  final addMyData;
+
+  @override
+
+  Widget build(BuildContext context) {
+    return Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar( actions: [
+          IconButton(onPressed: (){addMyData(); Navigator.pop(context);}, icon: Icon(Icons.send))
+        ]),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Image.file(userImage),
+            Text('이미지업로드화면'),
+            TextField(onChanged: (text){
+              setUserContent(text);
+            },),
+            IconButton(
+                onPressed: (){
+                  Navigator.pop(context);
+                },
+                icon: Icon(Icons.close)
+            ),
+          ],
+        )
+    );
+  }
+}
+
+class Profile extends StatelessWidget {
+  const Profile({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Text('프로필페이지'),
+    );
   }
 }
