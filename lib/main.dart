@@ -192,7 +192,7 @@ class _HomeState extends State<Home> {
         );
       });
     } else {
-      return Text('로딩중');
+      return Text('로딩중2');
     }
   }
 }
