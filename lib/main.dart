@@ -18,11 +18,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 //슬라이드 표현
 import 'package:flutter/cupertino.dart';
 
+// provider state보관
+import 'package:provider/provider.dart';
+
 void main() {
   runApp(
-    MaterialApp(
-        theme: style.theme,
-        home: MyApp()
+    ChangeNotifierProvider(
+      create: (c) => Store1(),
+      child: MaterialApp(
+          theme: style.theme,
+          home: MyApp()
+      ),
     )
   );
 }
@@ -231,14 +237,71 @@ class Upload extends StatelessWidget {
   }
 }
 
+class Store1 extends ChangeNotifier {
+  var name = 'john kim';
+  var friend = false;
+  var follower = 0;
+
+  var profileImage = [];
+
+  getData() async {
+    var result = await http.get(Uri.parse('https://codingapple1.github.io/app/profile.json'));
+    var result2 = jsonDecode(result.body);
+    profileImage = result2;
+    notifyListeners();
+  }
+
+  addFollower() {
+    follower += friend ? -1 : 1;
+    friend = !friend;
+    //재 렌더링
+    notifyListeners();
+  }
+}
+
 class Profile extends StatelessWidget {
   const Profile({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      body: Text('프로필페이지'),
+      appBar: AppBar(title: Text(context.watch<Store1>().name),),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: ProfileHeader()),
+          SliverGrid(
+              delegate: SliverChildBuilderDelegate(
+                    (c,i) => Image.network(context.watch<Store1>().profileImage[i]),
+                childCount: context.watch<Store1>().profileImage.length,
+              ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount( crossAxisCount: 2 ))
+        ],
+      )
+    );
+  }
+}
+
+
+class ProfileHeader extends StatelessWidget {
+  const ProfileHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.grey,
+        ),
+        Text('팔로워 ${context.watch<Store1>().follower}명'),
+        ElevatedButton(onPressed: (){
+          context.read<Store1>().addFollower();
+        }, child: Text('팔로우')),
+        ElevatedButton(onPressed: (){
+          context.read<Store1>().getData();
+        }, child: Text('사진 가져오기'))
+      ],
     );
   }
 }
