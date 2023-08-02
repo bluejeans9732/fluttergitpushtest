@@ -23,6 +23,7 @@ import 'package:provider/provider.dart';
 //알람
 import './notification.dart';
 
+
 void main() {
   runApp(
     ChangeNotifierProvider(
@@ -92,13 +93,14 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    initNotification();
+    initNotification(context);
     getData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(child: Text('+'), onPressed: (){showNotification2();},),
       appBar: AppBar(
         title: Text('Instagram'),
         actions: [
