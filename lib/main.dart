@@ -20,6 +20,8 @@ import 'package:flutter/cupertino.dart';
 
 // provider state보관
 import 'package:provider/provider.dart';
+//알람
+import './notification.dart';
 
 void main() {
   runApp(
@@ -90,6 +92,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    initNotification();
     getData();
   }
 
